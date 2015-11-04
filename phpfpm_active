@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+#
+# Magic markers:
+#%# family=auto
+#%# capabilities=autoconf
+
+my $ret = undef;
+
+if (! eval "require LWP::UserAgent;")
+{
+	$ret = "LWP::UserAgent not found";
+}
+
+#my $URL = exists $ENV{'url'} ? $ENV{'url'} : "http://127.0.0.1:%d/status";
+my @URLS = exists $ENV{'urls'} ? split(' ', $ENV{'urls'}) : ("http://127.0.0.1:%d/status");
+my @PORTS = exists $ENV{'ports'} ? split(' ', $ENV{'ports'}) : (80);
+
+if ( defined $ARGV[0] and $ARGV[0] eq "autoconf" )
+{
+	if ($ret)
+	{
+		print "no ($ret)\n";
+		exit 1;
+	}
+
+	my $ua = LWP::UserAgent->new(timeout => 30);
+
+	my @badports;
+
+	for (my $i=0; $i < $#URLS; $i++) {
+		my $url = "http://localhost:".$PORTS[$i]."/status-".$URLS[$i];
+		print "$url\n";
+		my $response = $ua->request(HTTP::Request->new('GET',$url));
+		push @badports, $port unless $response->is_success and $response->content =~ /^accepted conn:/im;
+	}	
+
+	if (@badports) {
+		print "no (phpfpm-status)\n";
+		exit 1;
+	} else {
+		print "yes\n";
+		exit 0;
+	}
+}
+
+if ( defined $ARGV[0] and $ARGV[0] eq "config" )
+{
+	print('graph_title PHP5-FPM Active
+graph_args --base 1024 -l 0
+graph_vlabel Connections
+graph_category PHP
+graph_order active idle total
+graph_info Plugin created by TJ Stein
+');
+	for (my $i=0; $i <= $#URLS; $i++) {
+		print("$URLS[$i].label $URLS[$i]\n");
+		print("$URLS[$i].draw LINE".($i+1)."\n");
+	}
+
+	exit 0;
+}
+
+for (my $i=0; $i <= $#URLS; $i++) {
+    my $ua = LWP::UserAgent->new(timeout => 30);
+	my $url = "http://localhost:".$PORTS[$i]."/status-".$URLS[$i];
+    my $response = $ua->request(HTTP::Request->new('GET',$url));
+
+	if ($response->content =~ /active processes:\s+([0-9\.]+)/im) {
+        print "$URLS[$i].value $1\n";
+    } else {
+        print "$URLS[$i].value U\n";
+    }
+}	
+
+# vim:syntax=perl
