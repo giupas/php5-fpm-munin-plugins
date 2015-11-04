@@ -36,4 +36,4 @@ exit 0
 fi
 
 echo -n "php_processes.value "
-ps awwwux | grep "$PHP_BIN: pool $PHP_POOL" | grep -v grep | wc -l
+ps awwwux | grep "$PHP_BIN: pool " | grep -v grep | wc -l

@@ -16,7 +16,6 @@
 #%# capabilities=autoconf
 
 PHP_BIN=${phpbin-"php5-fpm"}
-PHP_POOL=${phppool-"www"}
 
 if [ "$1" = "autoconf" ]; then
 echo yes
@@ -37,6 +36,6 @@ fi
 
 echo -n "php_average.value "
 tmpfile=/dev/shm/$$
-ps awwwux | grep "${PHP_BIN}: pool $PHP_POOL" | grep -v grep | grep -v master > $tmpfile
+ps awwwux | grep "${PHP_BIN}: pool " | grep -v grep | grep -v master > $tmpfile
 test -s $tmpfile && awk '{total_mem = $6 * 1024 + total_mem; total_proc++} END{printf("%d\n", total_mem / total_proc)}' $tmpfile || echo N
 rm -f $tmpfile

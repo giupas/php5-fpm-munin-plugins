@@ -5,7 +5,7 @@
 # Copyright TJ Stein 2010 http://constantshift.com
 
 my $PHP_BIN = exists $ENV{'phpbin'} ? $ENV{'phpbin'} : "php5-fpm";
-my $PHP_POOL = exists $ENV{'phppool'} ? $ENV{'phppool'} : "www";
+my @PHP_POOLS = exists $ENV{'pools'} ? split(' ', $ENV{'pools'}) : ("www");
 
 if ( exists $ARGV[0] and $ARGV[0] eq "config" ) {
         print "graph_title PHP5-FPM Memory Usage\n";
@@ -15,10 +15,14 @@ if ( exists $ARGV[0] and $ARGV[0] eq "config" ) {
                 print "graph_args --base 1024\n";
 } else {
         my $i = Integer;
-        @cmd = `ps auwx | grep "$PHP_BIN: pool $PHP_POOL" | grep -v grep | grep -v phpfpm_memory`;
-        foreach (@cmd) {
-                @return = split(/ +/, $_);
-                $i += @return[5]*1024;
+
+        foreach $PHP_POOL (@PHP_POOLS) {
+                @cmd = `ps auwx | grep -E "$PHP_BIN: pool $PHP_POOL\\s*\$" | grep -v grep | grep -v phpfpm_memory`;
+                foreach (@cmd) {
+                        @return = split(/ +/, $_);
+                        $i += @return[5]*1024;
+                }
         }
+
         print "ram.value ".$i."\n";
 }
