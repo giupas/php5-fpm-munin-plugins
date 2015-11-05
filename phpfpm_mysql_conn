@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+#
+# Munin plugin for monitoring PHP5-FPM memory usage
+#
+# Copyright TJ Stein 2010 http://constantshift.com
+
+my @DB = exists $ENV{'mysql'} ? split(' ', $ENV{'mysql'}) : ("mysql");
+
+if ( exists $ARGV[0] and $ARGV[0] eq "config" ) {
+    print "graph_title PHP5-FPM MySQL Connectios\n";
+    print "graph_vlabel Connectios\n";
+    print "graph_category PHP\n";
+
+    foreach $server (@DB) {
+		print "$server.label $server connections\n";
+    }
+
+} else {
+    my %servers;
+
+    @cmd = `netstat|grep mysql`;
+
+    foreach (@cmd) {
+            /([\w\d]+):mysql/;
+            $servers{$1}++;
+    }
+
+    foreach $s (keys %servers) {
+    	print "$s.value ".$servers{$s}."\n";    
+    }
+}
